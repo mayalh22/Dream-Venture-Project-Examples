@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrackStack — DreamVenture Hackathon Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,700;1,8..60,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --white: #f5f2eb;
+    --black: #0f0f0e;
+    --red: #d42b2b;
+    --grey: #7a7870;
+    --light: #e8e5de;
+    --mid: #c4c0b7;
+  }
+
+  html { font-size: 16px; }
+
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: 'Source Serif 4', Georgia, serif;
+    min-height: 100vh;
+    cursor: crosshair;
+  }
+
+  /* ── GRID LINES ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  * { position: relative; z-index: 1; }
+
+  /* ── MASTHEAD ── */
+  .masthead {
+    border-bottom: 6px solid var(--black);
+    padding: 0;
+  }
+
+  .masthead-top {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 2px solid var(--black);
+  }
+
+  .masthead-title {
+    flex: 1;
+    padding: 20px 32px;
+    border-right: 2px solid var(--black);
+  }
+
+  .volume-line {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-bottom: 4px;
+  }
+
+  .title-stack {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: 0.9;
+    letter-spacing: -0.01em;
+  }
+
+  .title-stack .red { color: var(--red); }
+
+  .masthead-meta {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px 24px;
+    min-width: 200px;
+  }
+
+  .meta-line {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--grey);
+    letter-spacing: 0.08em;
+  }
+
+  .meta-line.bold {
+    font-weight: 600;
+    color: var(--black);
+    font-size: 0.78rem;
+  }
+
+  .hackathon-bar {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 6px 32px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .hackathon-bar .red { color: var(--red); }
+
+  /* ── LAYOUT ── */
+  .page {
+    display: grid;
+    grid-template-columns: 1fr 2px 1fr 2px 1fr;
+    min-height: calc(100vh - 160px);
+  }
+
+  .col-divider {
+    background: var(--black);
+  }
+
+  .col {
+    padding: 28px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ── SECTION HEADER ── */
+  .sec-head {
+    border-top: 4px solid var(--black);
+    padding-top: 8px;
+  }
+
+  .sec-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-bottom: 4px;
+  }
+
+  .sec-title {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.6rem;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── DROP CAP INTRO ── */
+  .intro-text {
+    font-size: 0.92rem;
+    line-height: 1.65;
+    font-weight: 300;
+    font-style: italic;
+    color: #3a3832;
+  }
+
+  .intro-text::first-letter {
+    font-family: 'Anton', sans-serif;
+    font-size: 4rem;
+    float: left;
+    line-height: 0.75;
+    margin-right: 6px;
+    margin-top: 6px;
+    color: var(--red);
+  }
+
+  /* ── WEEK GRID ── */
+  .week-grid-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--mid);
+    padding-bottom: 4px;
+  }
+
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    border: 2px solid var(--black);
+  }
+
+  .day-cell {
+    border-right: 1px solid var(--black);
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+
+  .day-cell:last-child { border-right: none; }
+
+  .day-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--black);
+    background: var(--black);
+    color: var(--white);
+    letter-spacing: 0.1em;
+  }
+
+  .day-body {
+    padding: 10px 4px;
+    font-family: 'Anton', sans-serif;
+    font-size: 1.2rem;
+    color: var(--black);
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .day-cell.done .day-body {
+    background: var(--black);
+    color: var(--white);
+  }
+
+  .day-cell.partial .day-body {
+    background: var(--mid);
+    color: var(--black);
+  }
+
+  .day-cell.today .day-name {
+    background: var(--red);
+  }
+
+  .day-cell:hover .day-body {
+    background: var(--light);
+  }
+
+  .day-cell.done:hover .day-body {
+    background: #2a2a28;
+  }
+
+  /* ── BIG NUMBER ── */
+  .big-stat {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid var(--black);
+  }
+
+  .big-stat-num {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(4rem, 10vw, 7rem);
+    line-height: 1;
+    padding: 16px 20px 8px;
+    border-bottom: 2px solid var(--black);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .big-stat-num .unit {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--grey);
+    letter-spacing: 0.08em;
+  }
+
+  .big-stat-num.red { color: var(--red); }
+  .big-stat-num.good { color: var(--black); }
+
+  .big-stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--grey);
+    padding: 8px 20px;
+  }
+
+  /* ── LOG ENTRIES ── */
+  .log-entry {
+    border-top: 1px solid var(--black);
+    padding-top: 10px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    cursor: pointer;
+  }
+
+  .log-date {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--grey);
+    min-width: 36px;
+    text-align: right;
+    padding-top: 2px;
+    letter-spacing: 0.06em;
+  }
+
+  .log-body { flex: 1; }
+
+  .log-mins {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.4rem;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+
+  .log-detail {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--grey);
+    letter-spacing: 0.06em;
+  }
+
+  .log-bar-wrap {
+    margin-top: 5px;
+    height: 6px;
+    background: var(--light);
+    border: 1px solid var(--mid);
+  }
+
+  .log-bar {
+    height: 100%;
+    background: var(--black);
+    transition: width 0.5s ease;
+  }
+
+  .log-bar.red { background: var(--red); }
+  .log-bar.goal { background: #4a9e6e; }
+
+  /* ── HONESTY METER ── */
+  .honesty-block {
+    border: 2px solid var(--red);
+    padding: 16px;
+  }
+
+  .honesty-title {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.1rem;
+    color: var(--red);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .honesty-title::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: var(--red);
+  }
+
+  .honesty-q {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    font-style: italic;
+  }
+
+  .honesty-opts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .honesty-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    padding: 8px;
+    border: 1px solid var(--black);
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+    line-height: 1.3;
+  }
+
+  .honesty-btn:hover, .honesty-btn.selected {
+    background: var(--black);
+    color: var(--white);
+    border-color: var(--black);
+  }
+
+  /* ── REPORT CARD ── */
+  .report-card {
+    border: 2px solid var(--black);
+  }
+
+  .report-header {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .report-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--light);
+    padding: 10px 14px;
+    gap: 12px;
+  }
+
+  .report-row:last-child { border-bottom: none; }
+
+  .report-cat {
+    flex: 1;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--grey);
+    letter-spacing: 0.04em;
+  }
+
+  .report-grade {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.5rem;
+    min-width: 32px;
+    text-align: right;
+  }
+
+  .grade-a { color: #4a9e6e; }
+  .grade-b { color: var(--black); }
+  .grade-c { color: var(--grey); }
+  .grade-f { color: var(--red); }
+
+  /* ── LOG NEW ── */
+  .log-new {
+    border: 2px dashed var(--black);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .log-new-title {
+    font-family: 'Anton', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+  }
+
+  .log-slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .log-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 4px;
+    background: var(--mid);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .log-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--black);
+    cursor: pointer;
+    border: none;
+  }
+
+  .log-slider-val {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.4rem;
+    min-width: 52px;
+    text-align: right;
+  }
+
+  .log-submit {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 10px;
+    background: var(--black);
+    color: var(--white);
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s;
+  }
+
+  .log-submit:hover { background: var(--red); }
+
+  /* ── FOOTER STRIP ── */
+  .footer-strip {
+    background: var(--black);
+    color: var(--white);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 4px solid var(--black);
+  }
+
+  .footer-block {
+    padding: 20px 28px;
+    border-right: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .footer-block:last-child { border-right: none; }
+
+  .footer-block-title {
+    font-family: 'Anton', sans-serif;
+    font-size: 0.9rem;
+    color: var(--red);
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+
+  .footer-block-body {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.5;
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  @media (max-width: 700px) {
+    .page { grid-template-columns: 1fr; }
+    .col-divider { height: 2px; width: 100%; }
+    .footer-strip { grid-template-columns: 1fr; }
+    .footer-block { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.15); }
+  }
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div class="masthead-top">
+    <div class="masthead-title">
+      <div class="volume-line">Vol. 1 · Issue 1 · Habit Intelligence</div>
+      <div class="title-stack">TRACK<br><span class="red">STACK</span></div>
+    </div>
+    <div class="masthead-meta">
+      <div class="meta-line">Nightmare Prompt #11</div>
+      <div class="meta-line">The Practice Excuse</div>
+      <div class="meta-line bold">Thu, May 14 2026</div>
+      <div class="meta-line">Be honest with yourself first.</div>
+    </div>
+  </div>
+  <div class="hackathon-bar">
+    <span>DreamVenture Hackathon · Sample Project</span>
+    <span>Instrument: <span class="red">Guitar</span> · Goal: 30 min/day</span>
+  </div>
+</div>
+
+<!-- THREE COLUMN BODY -->
+<div class="page">
+
+  <!-- COL 1 -->
+  <div class="col">
+
+    <div class="sec-head">
+      <div class="sec-label">The Problem</div>
+      <div class="sec-title">YOU SAID<br>30 MINUTES.</div>
+    </div>
+
+    <div class="intro-text">
+      You've practiced twice this week. Your parents will ask. You don't want to lie — but you also don't want the lecture. TrackStack helps you be honest with <em>yourself</em> before anyone else has to know.
+    </div>
+
+    <!-- WEEK GRID -->
+    <div>
+      <div class="week-grid-label">This Week · Guitar Practice</div>
+      <div class="week-grid" id="week-grid">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- BIG STATS -->
+    <div class="big-stat">
+      <div class="big-stat-num red" id="stat-days">2 <span class="unit">/ 7 days</span></div>
+      <div class="big-stat-label">Practice sessions this week</div>
+    </div>
+
+    <div class="big-stat">
+      <div class="big-stat-num good" id="stat-mins">47 <span class="unit">min</span></div>
+      <div class="big-stat-label">Total practice time logged</div>
+    </div>
+
+    <div class="big-stat">
+      <div class="big-stat-num red">163 <span class="unit">min short</span></div>
+      <div class="big-stat-label">vs. weekly 210-min goal</div>
+    </div>
+
+  </div>
+
+  <div class="col-divider"></div>
+
+  <!-- COL 2 -->
+  <div class="col">
+
+    <div class="sec-head">
+      <div class="sec-label">Session Log · Verified Self-Report</div>
+      <div class="sec-title">THE RECORD</div>
+    </div>
+
+    <!-- LOG ENTRIES -->
+    <div class="log-entry">
+      <div class="log-date">MON</div>
+      <div class="log-body">
+        <div class="log-mins">32 min</div>
+        <div class="log-detail">Scales + chord transitions · Felt good</div>
+        <div class="log-bar-wrap"><div class="log-bar goal" style="width:100%"></div></div>
+      </div>
+    </div>
+
+    <div class="log-entry">
+      <div class="log-date">TUE</div>
+      <div class="log-body">
+        <div class="log-mins" style="color:var(--grey)">— skipped</div>
+        <div class="log-detail">Logged honestly: forgot</div>
+        <div class="log-bar-wrap"><div class="log-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="log-entry">
+      <div class="log-date">WED</div>
+      <div class="log-body">
+        <div class="log-mins" style="color:var(--grey)">— skipped</div>
+        <div class="log-detail">Logged honestly: too tired</div>
+        <div class="log-bar-wrap"><div class="log-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="log-entry">
+      <div class="log-date">THU</div>
+      <div class="log-body">
+        <div class="log-mins">15 min</div>
+        <div class="log-detail">Just noodling · Counts as half</div>
+        <div class="log-bar-wrap"><div class="log-bar red" style="width:50%"></div></div>
+      </div>
+    </div>
+
+    <div class="log-entry">
+      <div class="log-date">FRI</div>
+      <div class="log-body">
+        <div class="log-mins" style="color:var(--mid)">— today —</div>
+        <div class="log-detail">Log below when done</div>
+        <div class="log-bar-wrap"><div class="log-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- LOG NEW -->
+    <div class="log-new">
+      <div class="log-new-title">LOG TODAY'S SESSION</div>
+      <div class="log-slider-wrap">
+        <input type="range" class="log-slider" id="mins-slider" min="0" max="60" value="0" oninput="updateSlider(this.value)">
+        <div class="log-slider-val" id="slider-val">0 min</div>
+      </div>
+      <button class="log-submit" onclick="submitLog()">▶ Submit Honest Log</button>
+      <div id="log-feedback" style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--grey);letter-spacing:0.06em;min-height:16px;"></div>
+    </div>
+
+  </div>
+
+  <div class="col-divider"></div>
+
+  <!-- COL 3 -->
+  <div class="col">
+
+    <div class="sec-head">
+      <div class="sec-label">Self-Assessment · Before Anyone Asks</div>
+      <div class="sec-title">BE REAL.</div>
+    </div>
+
+    <!-- HONESTY BLOCK -->
+    <div class="honesty-block">
+      <div class="honesty-title">Honest Check-In</div>
+      <div class="honesty-q">Why didn't you practice this week? (No one's watching.)</div>
+      <div class="honesty-opts">
+        <button class="honesty-btn" onclick="selectHonesty(this)">I forgot</button>
+        <button class="honesty-btn" onclick="selectHonesty(this)">No energy</button>
+        <button class="honesty-btn" onclick="selectHonesty(this)">Goal too high</button>
+        <button class="honesty-btn" onclick="selectHonesty(this)">Just lazy</button>
+      </div>
+      <div id="honesty-result" style="margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--grey);min-height:20px;letter-spacing:0.04em;line-height:1.5;"></div>
+    </div>
+
+    <!-- REPORT CARD -->
+    <div>
+      <div class="sec-label" style="margin-bottom:8px;">Weekly Report Card</div>
+      <div class="report-card">
+        <div class="report-header">
+          <span>Category</span>
+          <span>Grade</span>
+        </div>
+        <div class="report-row">
+          <span class="report-cat">Consistency</span>
+          <span class="report-grade grade-f">F</span>
+        </div>
+        <div class="report-row">
+          <span class="report-cat">Honesty</span>
+          <span class="report-grade grade-a">A</span>
+        </div>
+        <div class="report-row">
+          <span class="report-cat">Quality (when you did)</span>
+          <span class="report-grade grade-b">B+</span>
+        </div>
+        <div class="report-row">
+          <span class="report-cat">Goal Awareness</span>
+          <span class="report-grade grade-b">B</span>
+        </div>
+        <div class="report-row">
+          <span class="report-cat">Overall</span>
+          <span class="report-grade grade-c">C−</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADJUST GOAL -->
+    <div>
+      <div class="sec-label" style="margin-bottom:8px;">Smart Goal Adjustment</div>
+      <div style="border:2px solid var(--black); padding:14px; font-family:'IBM Plex Mono',monospace; font-size:0.75rem; line-height:1.7; color:var(--grey);">
+        <span style="color:var(--black); font-weight:600;">TrackStack suggests:</span><br>
+        You hit 30 min <em>once</em> this week.<br>
+        Try <span style="color:var(--red); font-weight:600;">15 min/day</span> for 2 weeks,<br>
+        then step back to 30 min.<br>
+        <br>
+        <span style="color:var(--black); font-style:italic;">Honest streaks &gt; broken goals.</span>
+      </div>
+    </div>
+
+    <!-- PARENT SHARE -->
+    <div>
+      <div class="sec-label" style="margin-bottom:8px;">When They Ask</div>
+      <div style="border:2px solid var(--black); padding:14px;">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:0.65rem; color:var(--grey); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px;">Shareable Honest Summary</div>
+        <div style="font-style:italic; font-size:0.85rem; line-height:1.6; color:#3a3832;">
+          "I practiced 2 out of 7 days — 47 min total. I missed my goal but I logged every session honestly. I'm adjusting to 15 min/day this week."
+        </div>
+        <button onclick="copyReport()" style="margin-top:12px; font-family:'IBM Plex Mono',monospace; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; padding:8px 14px; border:1px solid var(--black); background:transparent; cursor:pointer; transition:all 0.15s;" onmouseover="this.style.background='#0f0f0e';this.style.color='#f5f2eb'" onmouseout="this.style.background='transparent';this.style.color='inherit'">
+          Copy Summary →
+        </button>
+        <div id="copy-msg" style="font-family:'IBM Plex Mono',monospace; font-size:0.6rem; color:var(--grey); margin-top:6px; min-height:14px;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer-strip">
+  <div class="footer-block">
+    <div class="footer-block-title">The Problem</div>
+    <div class="footer-block-body">You practiced twice. Your goal was every day. Lying feels bad. The lecture feels worse. There's no good option — unless you have a record.</div>
+  </div>
+  <div class="footer-block">
+    <div class="footer-block-title">The Solution</div>
+    <div class="footer-block-body">TrackStack is a self-honest habit logger. No streaks to fake. No gamification to cheat. Just a clean record you can actually stand behind.</div>
+  </div>
+  <div class="footer-block">
+    <div class="footer-block-title">The Impact</div>
+    <div class="footer-block-body">In pilots, students who logged honestly practiced 40% more consistently over 6 weeks than those tracking for external audiences.</div>
+  </div>
+</div>
+
+<script>
+  // WEEK GRID
+  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const states = ['partial','done','','','done','',''];
+  const grid = document.getElementById('week-grid');
+
+  days.forEach((d, i) => {
+    const cell = document.createElement('div');
+    cell.className = `day-cell ${states[i]} ${i === 4 ? 'today' : ''}`;
+    cell.innerHTML = `<div class="day-name">${d}</div><div class="day-body">${states[i] === 'done' ? '✓' : states[i] === 'partial' ? '½' : i === 4 ? '·' : ''}</div>`;
+    cell.onclick = () => {
+      const body = cell.querySelector('.day-body');
+      if (cell.classList.contains('done')) {
+        cell.classList.remove('done'); cell.classList.add('partial');
+        body.textContent = '½';
+      } else if (cell.classList.contains('partial')) {
+        cell.classList.remove('partial');
+        body.textContent = '';
+      } else {
+        cell.classList.add('done');
+        body.textContent = '✓';
+      }
+      updateStats();
+    };
+    grid.appendChild(cell);
+  });
+
+  function updateStats() {
+    const done = grid.querySelectorAll('.done').length;
+    const partial = grid.querySelectorAll('.partial').length;
+    document.getElementById('stat-days').innerHTML = `${done} <span class="unit">/ 7 days</span>`;
+  }
+
+  // SLIDER
+  function updateSlider(val) {
+    document.getElementById('slider-val').textContent = `${val} min`;
+  }
+
+  function submitLog() {
+    const val = document.getElementById('mins-slider').value;
+    const fb = document.getElementById('log-feedback');
+    if (val == 0) {
+      fb.textContent = '→ Logged honestly: 0 min. That counts too.';
+      fb.style.color = 'var(--grey)';
+    } else if (val < 15) {
+      fb.textContent = `→ ${val} min logged. Every bit adds up.`;
+      fb.style.color = 'var(--grey)';
+    } else if (val >= 30) {
+      fb.textContent = `→ ${val} min logged. Goal met! Streak extended.`;
+      fb.style.color = '#4a9e6e';
+    } else {
+      fb.textContent = `→ ${val} min logged. Halfway there — good.`;
+      fb.style.color = 'var(--black)';
+    }
+  }
+
+  // HONESTY
+  const responses = {
+    'I forgot': 'Logged. Suggestion: set a 7pm daily phone alarm labeled "guitar first."',
+    'No energy': 'Logged. Try 5 min instead of 30 on low-energy days. Done beats zero.',
+    'Goal too high': 'Logged. TrackStack will suggest a revised goal for next week.',
+    'Just lazy': 'Logged. Honest answer. That\'s the hardest one to admit — and the most useful.'
+  };
+
+  function selectHonesty(btn) {
+    document.querySelectorAll('.honesty-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('honesty-result').textContent = responses[btn.textContent] || '';
+  }
+
+  function copyReport() {
+    const text = `Weekly Practice Report — TrackStack\n\nI practiced 2 out of 7 days — 47 min total. I missed my goal but I logged every session honestly. I'm adjusting to 15 min/day this week.`;
+    navigator.clipboard.writeText(text).then(() => {
+      document.getElementById('copy-msg').textContent = '✓ Copied to clipboard';
+      setTimeout(() => document.getElementById('copy-msg').textContent = '', 2000);
+    });
+  }
+</script>
+
+</body>
+</html>
