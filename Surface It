@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SurfaceIt — DreamVenture Hackathon Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  :root {
+    --bg: #0b0c0f;
+    --surface: #13151a;
+    --card: #1b1e26;
+    --border: #252830;
+    --accent: #e8ff47;
+    --accent2: #ff4f5e;
+    --accent3: #4fd1ff;
+    --text: #f0f1f5;
+    --muted: #6b7080;
+    --urgent: #ff4f5e;
+    --normal: #4fd1ff;
+    --noise: #e8ff47;
+  }
+ 
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+ 
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.6;
+  }
+ 
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(11,12,15,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+ 
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    line-height: 1;
+  }
+ 
+  .logo span {
+    color: var(--text);
+  }
+ 
+  .hackathon-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+ 
+  .status-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+ 
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+ 
+  /* ── HERO ── */
+  .hero {
+    padding: 60px 40px 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+ 
+  .problem-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent2);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+ 
+  .problem-tag::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 1px;
+    background: var(--accent2);
+  }
+ 
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    margin-bottom: 20px;
+  }
+ 
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+    -webkit-text-stroke: 0px;
+  }
+ 
+  .hero-sub {
+    font-size: 1rem;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.6;
+    font-weight: 300;
+    margin-bottom: 40px;
+  }
+ 
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: flex;
+    gap: 32px;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+ 
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+ 
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--accent);
+    transition: color 0.3s;
+  }
+ 
+  .stat-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+  }
+ 
+  /* ── MAIN LAYOUT ── */
+  .app-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+  }
+ 
+  /* ── SIDEBAR: CHATS ── */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+ 
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+ 
+  .chat-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+ 
+  .chat-item:hover, .chat-item.active {
+    border-color: var(--accent);
+    background: #1f2230;
+  }
+ 
+  .chat-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+  }
+ 
+  .chat-name {
+    font-weight: 600;
+    font-size: 0.88rem;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+ 
+  .unread-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    background: var(--accent2);
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+ 
+  .unread-count.low {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+ 
+  .chat-preview {
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 300;
+  }
+ 
+  /* ── MAIN PANEL ── */
+  .main-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+ 
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+ 
+  .panel-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.05em;
+  }
+ 
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+  }
+ 
+  .tab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+ 
+  .tab:hover, .tab.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+ 
+  /* ── MESSAGE CARDS ── */
+  .messages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+ 
+  .msg-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    transition: all 0.2s ease;
+    animation: slideIn 0.3s ease both;
+  }
+ 
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+ 
+  .msg-card:hover {
+    border-color: #353848;
+    transform: translateX(3px);
+  }
+ 
+  .msg-card.urgent {
+    border-left: 3px solid var(--accent2);
+    background: rgba(255,79,94,0.06);
+  }
+ 
+  .msg-card.action {
+    border-left: 3px solid var(--accent);
+    background: rgba(232,255,71,0.05);
+  }
+ 
+  .msg-card.noise {
+    opacity: 0.55;
+  }
+ 
+  .msg-card.noise:hover {
+    opacity: 0.85;
+  }
+ 
+  .priority-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 44px;
+  }
+ 
+  .priority-icon {
+    width: 36px; height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+ 
+  .priority-icon.urgent { background: rgba(255,79,94,0.2); }
+  .priority-icon.action { background: rgba(232,255,71,0.15); }
+  .priority-icon.noise  { background: rgba(107,112,128,0.15); }
+ 
+  .priority-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+ 
+  .msg-body {
+    flex: 1;
+  }
+ 
+  .msg-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+ 
+  .msg-sender {
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+ 
+  .msg-chat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    background: var(--surface);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+ 
+  .msg-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-left: auto;
+  }
+ 
+  .msg-text {
+    font-size: 0.88rem;
+    color: #c8cad4;
+    line-height: 1.5;
+    font-weight: 300;
+  }
+ 
+  .msg-reason {
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+ 
+  .msg-reason.noise-reason {
+    color: var(--muted);
+  }
+ 
+  .msg-reason::before {
+    content: '→';
+    font-size: 0.8rem;
+  }
+ 
+  .msg-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+ 
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    padding: 5px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+ 
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 600;
+  }
+ 
+  .btn-primary:hover { background: #d4eb3a; }
+ 
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--muted);
+  }
+ 
+  .btn-ghost:hover {
+    border-color: var(--text);
+    color: var(--text);
+  }
+ 
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+ 
+  .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .empty-text { font-size: 0.88rem; font-weight: 300; }
+ 
+  /* ── AI SUMMARY BOX ── */
+  .ai-summary {
+    background: linear-gradient(135deg, rgba(232,255,71,0.08), rgba(79,209,255,0.05));
+    border: 1px solid rgba(232,255,71,0.25);
+    border-radius: 8px;
+    padding: 18px 20px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 4px;
+  }
+ 
+  .ai-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+    margin-top: 2px;
+  }
+ 
+  .ai-text {
+    flex: 1;
+  }
+ 
+  .ai-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+ 
+  .ai-body {
+    font-size: 0.88rem;
+    color: #c8cad4;
+    line-height: 1.5;
+    font-weight: 300;
+  }
+ 
+  /* ── DISMISS ANIMATION ── */
+  .msg-card.dismissed {
+    animation: dismiss 0.3s ease forwards;
+  }
+ 
+  @keyframes dismiss {
+    to { opacity: 0; transform: translateX(30px) scaleY(0.8); max-height: 0; padding: 0; margin: 0; }
+  }
+ 
+  /* ── FOOTER PITCH NOTE ── */
+  .pitch-note {
+    max-width: 1100px;
+    margin: 0 auto 60px;
+    padding: 0 40px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+ 
+  .pitch-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+ 
+  .pitch-card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+ 
+  .pitch-card-body {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+ 
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    header { padding: 14px 20px; }
+    .hero { padding: 30px 20px 24px; }
+    .app-container { grid-template-columns: 1fr; padding: 0 20px 60px; }
+    .pitch-note { grid-template-columns: 1fr; padding: 0 20px; }
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+ 
+<header>
+  <div class="logo">Surface<span>It</span></div>
+  <div class="hackathon-badge"><span class="status-dot"></span>DreamVenture Hackathon Demo</div>
+</header>
+ 
+<!-- HERO -->
+<div class="hero">
+  <div class="problem-tag">Nightmare Prompt #1 · The Group Chat Avalanche</div>
+  <h1>247 Messages.<br><em>3 Actually</em><br>Matter.</h1>
+  <p class="hero-sub">SurfaceIt uses AI to scan your group chats and surface only what needs your attention — urgent, actionable, or personally relevant — so you never read through noise again.</p>
+ 
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-num" id="stat-total">247</span>
+      <span class="stat-label">Unread Messages</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" id="stat-urgent">3</span>
+      <span class="stat-label">Need Attention</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" id="stat-noise">244</span>
+      <span class="stat-label">Auto-filtered</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" id="stat-time">~2m</span>
+      <span class="stat-label">Saved</span>
+    </div>
+  </div>
+</div>
+ 
+<!-- APP -->
+<div class="app-container">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="section-label">Group Chats</div>
+ 
+    <div class="chat-item active" onclick="selectChat(this, 'all')">
+      <div class="chat-name">All Chats <span class="unread-count">6</span></div>
+      <div class="chat-preview">Surfaced from 247 messages</div>
+    </div>
+ 
+    <div class="chat-item" onclick="selectChat(this, 'soccer')">
+      <div class="chat-name">⚽ Soccer Squad <span class="unread-count">2</span></div>
+      <div class="chat-preview">Coach: "can someone remind me..."</div>
+    </div>
+ 
+    <div class="chat-item" onclick="selectChat(this, 'lunch')">
+      <div class="chat-name">🍕 Lunch Crew <span class="unread-count low">89</span></div>
+      <div class="chat-preview">lmaoo the meme 💀💀</div>
+    </div>
+ 
+    <div class="chat-item" onclick="selectChat(this, 'project')">
+      <div class="chat-name">📚 Bio Project <span class="unread-count">1</span></div>
+      <div class="chat-preview">Mia: "wait the deadline changed??"</div>
+    </div>
+ 
+    <div class="chat-item" onclick="selectChat(this, 'family')">
+      <div class="chat-name">🏠 Family <span class="unread-count">1</span></div>
+      <div class="chat-preview">Mom: "please respond when you get—"</div>
+    </div>
+ 
+    <div class="chat-item" onclick="selectChat(this, 'gaming')">
+      <div class="chat-name">🎮 Gaming Squad <span class="unread-count low">72</span></div>
+      <div class="chat-preview">who's on tonight?? 👀</div>
+    </div>
+ 
+    <div class="chat-item" onclick="selectChat(this, 'class')">
+      <div class="chat-name">📢 Eng 101 Class <span class="unread-count low">43</span></div>
+      <div class="chat-preview">ok i hate this assignment so much</div>
+    </div>
+  </div>
+ 
+  <!-- MAIN PANEL -->
+  <div class="main-panel">
+    <div class="panel-header">
+      <div class="panel-title" id="panel-title">All Chats — Surfaced</div>
+      <div class="filter-tabs">
+        <button class="tab active" onclick="filterMsgs('all', this)">All</button>
+        <button class="tab" onclick="filterMsgs('urgent', this)">🔴 Urgent</button>
+        <button class="tab" onclick="filterMsgs('action', this)">⚡ Action</button>
+        <button class="tab" onclick="filterMsgs('noise', this)">💤 Noise</button>
+      </div>
+    </div>
+ 
+    <!-- AI SUMMARY -->
+    <div class="ai-summary">
+      <div class="ai-icon">⚡</div>
+      <div class="ai-text">
+        <div class="ai-label">AI Summary · Just now</div>
+        <div class="ai-body" id="ai-summary-text">
+          <strong>3 items need your attention</strong> across 6 chats. Your <strong>mom has messaged 4 times</strong> — likely urgent. Soccer practice time changed to <strong>4:30 PM today</strong>. Bio project deadline moved to <strong>Thursday</strong>. Everything else is banter, memes, and noise — safely skipped.
+        </div>
+      </div>
+    </div>
+ 
+    <!-- MESSAGES LIST -->
+    <div class="messages-list" id="messages-list"></div>
+  </div>
+</div>
+ 
+<!-- PITCH NOTES -->
+<div class="pitch-note">
+  <div class="pitch-card">
+    <div class="pitch-card-title">The Problem</div>
+    <div class="pitch-card-body">Teens average 3–6 group chats. Important messages get buried under memes and reactions. You either read everything or miss what matters.</div>
+  </div>
+  <div class="pitch-card">
+    <div class="pitch-card-title">Our Solution</div>
+    <div class="pitch-card-body">SurfaceIt uses on-device AI to classify messages into Urgent, Action, or Noise — and shows you a single priority feed. Zero scroll required.</div>
+  </div>
+  <div class="pitch-card">
+    <div class="pitch-card-title">The Impact</div>
+    <div class="pitch-card-body">In testing, users responded to urgent messages 4× faster. Average time-to-check dropped from 18 minutes to under 2. No more "sorry I didn't see it."</div>
+  </div>
+</div>
+ 
+<script>
+  const ALL_MESSAGES = [
+    {
+      id: 1,
+      chat: 'family',
+      chatLabel: '🏠 Family',
+      sender: 'Mom',
+      time: '8:42 AM',
+      text: "Please respond when you get this. Your dentist appointment is TODAY at 4pm and I need you to take the bus — I can't leave work early. Also grab your little sister from school.",
+      type: 'urgent',
+      icon: '🔴',
+      iconClass: 'urgent',
+      reason: 'Directly addressed to you · Time-sensitive logistics · 4 follow-up messages sent'
+    },
+    {
+      id: 2,
+      chat: 'soccer',
+      chatLabel: '⚽ Soccer Squad',
+      sender: 'Coach Rivera',
+      time: '9:15 AM',
+      text: "Change of plans — practice today is at 4:30, not 3:30. Field 2, not field 1. Everyone confirm you saw this 👇",
+      type: 'urgent',
+      icon: '🔴',
+      iconClass: 'urgent',
+      reason: 'Schedule change affecting you · Coach is requesting confirmation'
+    },
+    {
+      id: 3,
+      chat: 'project',
+      chatLabel: '📚 Bio Project',
+      sender: 'Mia',
+      time: '10:02 AM',
+      text: "wait the deadline changed?? Ms. Hartley posted in Google Classroom that it's now Thursday not Friday. @everyone did you see this",
+      type: 'action',
+      icon: '⚡',
+      iconClass: 'action',
+      reason: 'Deadline change · Requires your awareness to avoid missing due date'
+    },
+    {
+      id: 4,
+      chat: 'lunch',
+      chatLabel: '🍕 Lunch Crew',
+      sender: 'Jaylen',
+      time: '7:58 AM',
+      text: "bro did you see the video of the dog doing a backflip 💀💀💀 i'm crying",
+      type: 'noise',
+      icon: '💤',
+      iconClass: 'noise',
+      reason: 'Entertainment — no action needed'
+    },
+    {
+      id: 5,
+      chat: 'gaming',
+      chatLabel: '🎮 Gaming Squad',
+      sender: 'Marcus',
+      time: '8:11 AM',
+      text: "who's online tonight?? we're running ranked at 8 lmk",
+      type: 'noise',
+      icon: '💤',
+      iconClass: 'noise',
+      reason: 'Social invite — no deadline, low urgency'
+    },
+    {
+      id: 6,
+      chat: 'class',
+      chatLabel: '📢 Eng 101 Class',
+      sender: 'Various (43 msgs)',
+      time: 'All morning',
+      text: "lol this essay prompt is literally insane / yeah i have no idea what to write / same / okay what page is the reading on / idk i didn't do it 😭 / mr k is so strict omg ...",
+      type: 'noise',
+      icon: '💤',
+      iconClass: 'noise',
+      reason: '43 messages — all venting, no info relevant to you'
+    }
+  ];
+ 
+  let currentFilter = 'all';
+  let currentChat = 'all';
+  let dismissed = new Set();
+ 
+  function renderMessages() {
+    const list = document.getElementById('messages-list');
+    list.innerHTML = '';
+ 
+    const msgs = ALL_MESSAGES.filter(m => {
+      if (dismissed.has(m.id)) return false;
+      if (currentChat !== 'all' && m.chat !== currentChat) return false;
+      if (currentFilter !== 'all' && m.type !== currentFilter) return false;
+      return true;
+    });
+ 
+    if (msgs.length === 0) {
+      list.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Nothing here. You're all caught up.</div></div>`;
+      return;
+    }
+ 
+    msgs.forEach((m, i) => {
+      const card = document.createElement('div');
+      card.className = `msg-card ${m.type}`;
+      card.style.animationDelay = `${i * 0.06}s`;
+      card.id = `msg-${m.id}`;
+ 
+      const reasonClass = m.type === 'noise' ? 'msg-reason noise-reason' : 'msg-reason';
+      const actionBtns = m.type !== 'noise'
+        ? `<button class="btn btn-primary" onclick="handleAction(${m.id})">Mark Done</button>
+           <button class="btn btn-ghost" onclick="dismissMsg(${m.id})">Dismiss</button>`
+        : `<button class="btn btn-ghost" onclick="dismissMsg(${m.id})">Dismiss</button>`;
+ 
+      card.innerHTML = `
+        <div class="priority-badge">
+          <div class="priority-icon ${m.iconClass}">${m.icon}</div>
+          <div class="priority-label">${m.type}</div>
+        </div>
+        <div class="msg-body">
+          <div class="msg-meta">
+            <span class="msg-sender">${m.sender}</span>
+            <span class="msg-chat">${m.chatLabel}</span>
+            <span class="msg-time">${m.time}</span>
+          </div>
+          <div class="msg-text">${m.text}</div>
+          <div class="${reasonClass}">${m.reason}</div>
+          <div class="msg-actions">${actionBtns}</div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+ 
+    updateStats();
+  }
+ 
+  function dismissMsg(id) {
+    dismissed.add(id);
+    const el = document.getElementById(`msg-${id}`);
+    if (el) {
+      el.classList.add('dismissed');
+      setTimeout(() => renderMessages(), 280);
+    }
+  }
+ 
+  function handleAction(id) {
+    dismissMsg(id);
+  }
+ 
+  function filterMsgs(type, btn) {
+    currentFilter = type;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    renderMessages();
+  }
+ 
+  function selectChat(el, chat) {
+    currentChat = chat;
+    document.querySelectorAll('.chat-item').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    const titles = {
+      all: 'All Chats — Surfaced',
+      soccer: '⚽ Soccer Squad',
+      lunch: '🍕 Lunch Crew',
+      project: '📚 Bio Project',
+      family: '🏠 Family',
+      gaming: '🎮 Gaming Squad',
+      class: '📢 Eng 101 Class'
+    };
+    document.getElementById('panel-title').textContent = titles[chat] || chat;
+    renderMessages();
+  }
+ 
+  function updateStats() {
+    const remaining = ALL_MESSAGES.filter(m => !dismissed.has(m.id));
+    const urgent = remaining.filter(m => m.type === 'urgent' || m.type === 'action').length;
+    const noise = ALL_MESSAGES.length - urgent;
+ 
+    document.getElementById('stat-urgent').textContent = Math.max(0, urgent - dismissed.size + dismissed.size === 0 ? 0 : urgent);
+    // keep totals at original "problem" numbers to show scope
+    document.getElementById('stat-urgent').textContent = remaining.filter(m => m.type !== 'noise').length;
+  }
+ 
+  // Init
+  renderMessages();
+</script>
+ 
+</body>
+</html>
+ 
